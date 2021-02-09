@@ -1,0 +1,72 @@
+.treetable {
+    font-family: monospace; font-size: 12px; font-style: normal; font-variant: normal; font-weight: 700; line-height: 26.4px;
+}
+
+td.diffspan {
+    cursor: default;
+    padding-left: 0px;
+}
+
+td {
+  padding-left: 0px;
+  text-align: left;
+}
+
+/*
+table.treetable tbody tr td.diffspan {
+  padding-left:1em;
+}*/
+
+/*table.treetable tbody tr td table tr td.diffspan*/
+
+table.treetable tbody tr td td
+{
+    /*padding-left:0px;*/
+  padding: initial;
+}
+
+
+
+/* ---------------------------------- */
+/* This text is in monospace */
+span.diffspan {
+    font-family: monospace; font-size: 10px; font-style: normal; font-variant: normal; font-weight: 700; line-height: 26.4px;
+}
+
+.diffselectbox {
+  width: 300px;
+  font-family: monospace; font-size: 12px; font-style: normal; font-variant: normal; font-weight: 600; line-height: 26.4px;
+}
+
+/* -------------------------------- */
+
+/*span.diffadd {
+    background-color: #eeffee;
+}
+
+span.diffadd {
+    background-color: #eeffee;
+}
+
+span.diffdel {
+    background-color: #ffeeee;
+}
+
+span.diffremain {
+}
+
+span.diffremainchanged {
+    background-color: lightgrey;
+}*/
+
+span.diffnew {
+    background-color: lightgreen;
+}
+
+span.diffsha {
+    background-color: blue;
+}
+
+span.diffremoved {
+    background-color: red;
+}

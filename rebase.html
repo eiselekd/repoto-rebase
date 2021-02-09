@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Rebase branches</title>
+    <script >
+      var defered_event_handler = [];
+      var register = [];
+      var shas_hash = {};
+    </script>
+    <script src="files/jquery-ui-1.12.1.custom/external/jquery/jquery.js"></script>
+    <script src="files/jquery-ui-1.12.1.custom/jquery-ui.js"></script>
+    <script src="files/jquery-treetable/jquery.treetable.js"></script>
+    <script src="rebase.js"></script>
+    <link rel="stylesheet" type="text/css" href="rebase.css">
+    <link rel="stylesheet" type="text/css" href="files/jquery-treetable/css/jquery.treetable.css">
+    <link rel="stylesheet" type="text/css" href="files/jquery-treetable/css/jquery.treetable.theme.default.css">
+    <link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript" charset="utf-8">
+      $(document).ready(function(){
+	  var cache = {repodiff:{}};
+	  var obj_val = [[],[]];
+	  var obj_val_branch = [[],[]];
+	  var obj_val_rev = [[],[]];
+	  var obj_val_manifest = [[],[]];
+	  var obj_val_repolist = [undefined,undefined];
+	  var obj_val_repo = [[],[]];
+
+	  function update(e,v) {
+	      var r = Object.assign({},e);
+	      r = Object.assign(r,v);
+	      return r;
+	  }
+	  
+	  if ("WebSocket" in window) {
+	      ws = new WebSocket("ws://" + document.domain + ":5000/api");
+	      ws.onclose = function (msg) {
+		  alert("Connection lost, please reload\n");
+	      };
+	      ws.onmessage = function (msg) {
+		  var obj = JSON.parse(msg.data);
+		  console.log("> got reply");console.log(obj);
+		  if (obj.type == "md") {
+		      var idx = 0;
+		      $("#log").html("Manifest dirs<br><p>"+obj.data.join("<br>\n")+"</p>")
+		  } 
+	      };
+	      ws.onopen = function () {
+		  ws.send(JSON.stringify({'type': 'start'}));
+	      }
+
+	  } else {
+	      alert("WebSocket not supported");
+	  }
+
+      });
+    </script>
+  </head>
+  <body>
+    <table>
+      <tr>
+	<th></th>
+	<th>Version From</th>
+	<th>Version To</th>
+      </tr>
+      <tr>
+	<td>
+	  <span class="diffspan">Manifest dir</span>
+	</td>
+	<td>
+	  <select id="mrdir-0" class="diffselectbox" placeholder="Please select"></select>
+	</td>
+	<td>
+	  <select id="mrdir-1" class="diffselectbox" placeholder="Please select"></select>
+	</td>
+      </tr>
+      <tr>
+	<td>
+	  <span class="diffspan">Manifest repo branch:</span>
+	</td>
+	<td>
+	  <select id="mrbranches-0" class="diffselectbox" placeholder="Please select"></select>
+	</td>
+	<td>
+	  <select id="mrbranches-1" class="diffselectbox"></select>
+	</td>
+      </tr>
+      <tr>
+	<td>
+	  <span class="diffspan">Manifest repo sha:</span>
+	</td>
+	<td>
+	  <select id="mrrev-0" class="diffselectbox"></select>
+	</td>
+	<td>
+	  <select id="mrrev-1" class="diffselectbox"></select>
+	</td>
+      </tr>
+      <tr>
+	<td>
+	  <span class="diffspan">Manifest file&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span>
+	</td>
+	<td>
+	  <select id="manifestfiles-0" class="diffselectbox"></select>
+	</td>
+	<td>
+	  <select id="manifestfiles-1" class="diffselectbox"></select>
+	</td>
+      </tr>
+    </table>
+
+    <!--
+	repo list:<br>
+	<div id="repolist" class="menu-tree column expleft">          <ul>
+	  </ul>
+	</div><br> !-->
+
+	<!-- <div id="log"></div> !-->
+
+
+	<table id="repolist">
+	</table>
+	<table id="request" class="bumpspan">
+	</table>
+
+  </body>
+</html>
