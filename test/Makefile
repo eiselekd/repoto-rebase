@@ -16,3 +16,8 @@ all:
 	git -C $(CURDIR)/r_work add file_b.txt
 	git -C $(CURDIR)/r_work commit -m 'master_file_b.txt'
 	git -C $(CURDIR)/r_work push origin HEAD:branch_b
+	# master
+	git -C $(CURDIR)/r_work checkout master
+	cp Readme_master0.txt $(CURDIR)/r_work/Readme.txt
+	git -C $(CURDIR)/r_work commit --all -m 'init master'
+	git -C $(CURDIR)/r_work push origin HEAD:master
