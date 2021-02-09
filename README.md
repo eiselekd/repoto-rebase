@@ -1,2 +1,2 @@
-# repoto-diff
+# repoto-rebase
 
