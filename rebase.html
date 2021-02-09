@@ -18,12 +18,7 @@
     <script type="text/javascript" charset="utf-8">
       $(document).ready(function(){
 	  var cache = {repodiff:{}};
-	  var obj_val = [[],[]];
-	  var obj_val_branch = [[],[]];
-	  var obj_val_rev = [[],[]];
-	  var obj_val_manifest = [[],[]];
-	  var obj_val_repolist = [undefined,undefined];
-	  var obj_val_repo = [[],[]];
+	  var obj_repo = {};
 
 	  function update(e,v) {
 	      var r = Object.assign({},e);
@@ -32,17 +27,126 @@
 	  }
 	  
 	  if ("WebSocket" in window) {
-	      ws = new WebSocket("ws://" + document.domain + ":5000/api");
+	      ws = new WebSocket("ws://" + document.domain + ":5001/api");
 	      ws.onclose = function (msg) {
 		  alert("Connection lost, please reload\n");
 	      };
 	      ws.onmessage = function (msg) {
 		  var obj = JSON.parse(msg.data);
 		  console.log("> got reply");console.log(obj);
-		  if (obj.type == "md") {
+		  if (obj.type == "repolist") {
 		      var idx = 0;
-		      $("#log").html("Manifest dirs<br><p>"+obj.data.join("<br>\n")+"</p>")
-		  } 
+		      $("#log").html("repo dirs<br><p>"+obj.data.join("<br>\n")+"</p>")
+		      req = {'type': 'reposel', 'data' : update(obj.data[idx] ) };
+		      ws.send(JSON.stringify(req));
+		      req.dir = "send request reposel";
+		      console.log(req);
+		      obj_repo = obj.data[idx];
+		  } else if (obj.type == "branchlist") {
+		      var idx = 0;
+		      $("#log").html("branchlist<br><p>"+obj.data+"</p>")
+		      /*****************************************/
+		      $("#srcbranch, #dstbranch").empty();
+		      for (const e of obj.data.branches) {
+			  $('#srcbranch').append(new Option(e,[e,0,idx]));
+			  $('#dstbranch').append(new Option(e,[e,1,idx]));
+			  idx += 1;
+		      }
+		      /*****************************************/
+		      $("#srctag").empty();
+		      for (const e of obj.data.tags) {
+			  $('#srctag').append(new Option(e,[e,0,idx]));
+			  idx += 1;
+		      }
+		  } else if (obj.type == "patchlist") {
+		      obj_repo = obj.data;
+
+		      $("#log").html("patchlist<br><p>"+obj.data+"</p>")
+		      var c = "";
+		      for (const e of obj.data.patches) {
+			  c = c + "<li class='rebaselist ui-state-default' id=\"patchlist-"+e.sha+"\"> \
+<select class=\"rebasepick rebaselist\" id=\"patchlist-operation-"+e.sha+"\" \" placeholder=\"pick\"><option>pick</option><option>drop</option><option>squash</option></select>\
+<a class=\"expandsha\" id=\"patchlist-expand-"+e.sha+"\">[+]</a>"+e.sha.substring(0,6)+ ":" + e.summary + "<span id=\"patchlist-content-"+e.sha+"\"></span></li>";
+		      }
+		      $('#patchlist').html(c);
+		      $('#patchlist').sortable();
+		      $('#patchlist').disableSelection();
+		      $('.expandsha').click(function() {
+			  var text = $(this).text();
+			  var id = $(this).attr('id').substr(17)
+			  if (text == "[+]") {
+			      req = {'type': 'getcommit', 'data' : update(obj.data, { 'shacommit' : id } ) };
+			      ws.send(JSON.stringify(req));
+			      req.dir = "send request getshapatch";
+			      console.log(req);
+			      $(this).text("[-]");
+			  } else {
+			      $("#commit-list-"+id).remove();
+			      $(this).text("[+]");
+			  }
+		      });
+		  } else if (obj.type == "commit") {
+		      $("#log").html("commit<br><p>"+obj.data+"</p>")
+		      var id = obj.data.shacommit;
+		      var src = escapeHtml(obj.data.src);
+		      var a = src.split("\n");
+		      
+		      var ismessage = 1; var message = [];
+		      var curdiff=undefined;
+		      var diffs = [];
+		      
+		      function closediff() {
+			  if (curdiff != undefined) {
+			      diffs.push(curdiff);
+			      curdiff = undefined;
+			  }
+		      }
+		      function opendiff(fn) {
+			  closediff();
+			  curdiff = { fn : fn, l : [] };
+		      }
+
+		      var a = src.split("\n");
+		      for (var l of a) {
+			  if (m = l.match( /^\+\+\+(.+)/ )) {
+			      opendiff(m[1]);
+			      ismessage = 0;
+			  } else {
+			      if (ismessage) {
+				  message.push(l);
+			      } else {
+				  if (curdiff != undefined) {
+				      curdiff.l.push(l);
+				  }
+			      }
+			  }
+		      }
+		      closediff();
+		      console.log(diffs);
+		      
+		      var a = []; var lid_ar = [];
+		      var lid = globalIdnext(); var pid = 0;
+		      a.push("<tr style=\"display: table-row;\" data-tt-id='"+lid+"' >"+
+			     "<td></td><td class=\"diffspan\"><pre>"+message.join("\n")+"</pre></td></tr>");
+		      for ( var d of diffs) {
+			  var lid = globalIdnext(); lid_ar.push(lid);
+			  var srcid = globalIdnext();
+			  a.push("<tr style=\"display: table-row;\" data-tt-id='"+lid+"' >"+
+				 "<td></td><td class=\"diffspan\">"+d.fn+"</td></tr>");
+			  a.push("<tr style=\"display: table-row;\" data-tt-id='"+srcid+"' data-tt-parent-id='"+lid+"'>"+
+				 "<td></td><td class=\"diffspan\"><pre>"+d.l.join("\n")+"</pre></td></tr>");
+		      }
+
+		      console.log(a);
+		      
+		      var n = "commit-list-"+id;
+		      $("#patchlist-content-"+id).html("<table id=\""+n+"\">" + a.join("\n") + "</table>");
+		      
+		      $("#"+n).treetable({ expandable: true },1);
+		      
+		  }
+		  
+
 	      };
 	      ws.onopen = function () {
 		  ws.send(JSON.stringify({'type': 'start'}));
@@ -52,69 +156,89 @@
 	      alert("WebSocket not supported");
 	  }
 
+	  $("#cmdpatchlist").click(function () {
+	      var srcbranch = $('#srcbranch').val().split(",")[0];
+	      var srctag = $('#srctag').val().split(",")[0];
+	      req = {'type': 'getpatchlist', 'data' : update(obj_repo, { 'srcbranch': srcbranch, 'srctag': srctag } ) };
+	      ws.send(JSON.stringify(req));
+	      req.dir = "send request getpatchlist";
+	      console.log(req);
+	  });
+	  $("#cmdrebase").click(function () {
+	      var a = [];
+	      $("#patchlist").children('li').each(function (e) {
+		  var id = $(this).attr('id').substr(10);
+		  var op = $("#patchlist-operation-"+id+" option:selected").text();
+		  a.push([op,id]);
+	      });
+	      req = {'type': 'sendpatchlist', 'data' : update(obj_repo, { 'patchset': a } ) };
+	      ws.send(JSON.stringify(req));
+	      req.dir = "send request sendpatchlist";
+	      console.log(req);
+	  });
+
+	  
       });
     </script>
   </head>
   <body>
     <table>
       <tr>
+	<th> </th>
+	<th>Source</th>
 	<th></th>
-	<th>Version From</th>
-	<th>Version To</th>
+	<th>Destination</th>
       </tr>
       <tr>
 	<td>
-	  <span class="diffspan">Manifest dir</span>
+	  <span class="diffspan">Select tail</span>
 	</td>
 	<td>
-	  <select id="mrdir-0" class="diffselectbox" placeholder="Please select"></select>
+	  <select id="srcbranch" class="diffselectbox" placeholder="Please select"></select>
 	</td>
 	<td>
-	  <select id="mrdir-1" class="diffselectbox" placeholder="Please select"></select>
-	</td>
-      </tr>
-      <tr>
-	<td>
-	  <span class="diffspan">Manifest repo branch:</span>
+	  Onto branch
 	</td>
 	<td>
-	  <select id="mrbranches-0" class="diffselectbox" placeholder="Please select"></select>
-	</td>
-	<td>
-	  <select id="mrbranches-1" class="diffselectbox"></select>
+	  <select id="dstbranch" class="diffselectbox" placeholder="Please select"></select>
 	</td>
       </tr>
       <tr>
 	<td>
-	  <span class="diffspan">Manifest repo sha:</span>
+	  <span class="diffspan">From</span>
 	</td>
 	<td>
-	  <select id="mrrev-0" class="diffselectbox"></select>
+	  <select id="srctag" class="diffselectbox" placeholder="Please select"></select>
 	</td>
 	<td>
-	  <select id="mrrev-1" class="diffselectbox"></select>
+	</td>
+	<td>
+
 	</td>
       </tr>
       <tr>
 	<td>
-	  <span class="diffspan">Manifest file&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span>
+	  <span class="diffspan"> </span>
 	</td>
 	<td>
-	  <select id="manifestfiles-0" class="diffselectbox"></select>
+	  <button id="cmdpatchlist" >patchlist</button><button id="cmdrebase" >rebase</button>
 	</td>
 	<td>
-	  <select id="manifestfiles-1" class="diffselectbox"></select>
+	</td>
+	<td>
+	  <button>push</button>
+	</td>
+      </tr>
+      <tr>
+	<td>
+	</td>
+	<td>
+	  <ul id="patchlist">
+	  </ul>
 	</td>
       </tr>
     </table>
 
-    <!--
-	repo list:<br>
-	<div id="repolist" class="menu-tree column expleft">          <ul>
-	  </ul>
-	</div><br> !-->
-
-	<!-- <div id="log"></div> !-->
 
 
 	<table id="repolist">

@@ -33,6 +33,15 @@ span.diffspan {
     font-family: monospace; font-size: 10px; font-style: normal; font-variant: normal; font-weight: 700; line-height: 26.4px;
 }
 
+li.rebaselist {
+    font-family: monospace; font-size: 10px; font-style: normal; font-variant: normal; font-weight: 700; line-height: 26.4px;
+}
+
+select.rebaselist {
+    font-family: monospace; font-size: 8px; font-style: normal; font-variant: normal; font-weight: 700; line-height: 26.4px;
+}
+
+
 .diffselectbox {
   width: 300px;
   font-family: monospace; font-size: 12px; font-style: normal; font-variant: normal; font-weight: 600; line-height: 26.4px;

@@ -7,15 +7,17 @@ all:
 	git -C $(CURDIR)/r_work commit -m 'init master'
 	git -C $(CURDIR)/r_work push origin HEAD:master
 	git -C $(CURDIR)/r_work checkout -b branch_a
+	git -C $(CURDIR)/r_work tag branch_a_start
 	cp file_a.txt $(CURDIR)/r_work/file_a.txt
 	git -C $(CURDIR)/r_work add file_a.txt
 	git -C $(CURDIR)/r_work commit -m 'master_file_a.txt'
-	git -C $(CURDIR)/r_work push origin HEAD:branch_a
+	git -C $(CURDIR)/r_work push --tags origin HEAD:branch_a
 	git -C $(CURDIR)/r_work checkout -b branch_b
+	git -C $(CURDIR)/r_work tag branch_b_start
 	cp file_b.txt $(CURDIR)/r_work/file_b.txt
 	git -C $(CURDIR)/r_work add file_b.txt
 	git -C $(CURDIR)/r_work commit -m 'master_file_b.txt'
-	git -C $(CURDIR)/r_work push origin HEAD:branch_b
+	git -C $(CURDIR)/r_work push --tags origin HEAD:branch_b
 	# master
 	git -C $(CURDIR)/r_work checkout master
 	cp Readme_master0.txt $(CURDIR)/r_work/Readme.txt
